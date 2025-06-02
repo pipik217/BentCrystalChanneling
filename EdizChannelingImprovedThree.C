@@ -103,7 +103,7 @@ Bool_t passesDechanneling(const TLorentzVector& p, Double_t pv) //5
 
 
 // false (more data) true (faster)
-void EdizChannelingImprovedTwo(bool skipOnFail = false) {
+void EdizChannelingImprovedThree(bool skipOnFail = false) {
     TFile f("eventsXib.root", "READ");
     TTree* t = (TTree*)f.Get("tree");
 
