@@ -1,4 +1,4 @@
-#include "propertiesImproved.h"
+#include "propertiesImproved2.h"
 #include "TFile.h"
 #include "TTree.h"
 #include "TLorentzVector.h"
@@ -7,6 +7,8 @@
 #include <cmath>
 #include <fstream>
 #include <iostream>
+
+TRandom3 rnd(0);
 
 namespace Eric
 {
@@ -27,9 +29,13 @@ void matrixMakerImproved(bool skipOnFail = true)
     //this block reads in the data for analysis.
 
     //change name here to decide which file to read the events from
-    TFile f("eventsMultiplied.root", "READ");
+    TFile f("eventsMultipliedXib.root", "READ");
     TTree* t = (TTree*)f.Get("tree");
-    auto outFile = std::unique_ptr<TFile>(TFile::Open("outfile.root", "RECREATE"));
+    //auto outFile = std::unique_ptr<TFile>(TFile::Open("outfile.root", "RECREATE"));
+
+
+    //siliciumFile.open("energiesSilicium.dat");
+    //germaniumFile.open("energiesGermanium.dat");
 
     constexpr Int_t lengthMin{1};           //cm
     constexpr Double_t lengthMin_m{lengthMin / 100.0}; //m
@@ -42,11 +48,11 @@ void matrixMakerImproved(bool skipOnFail = true)
     constexpr Double_t thetaMin_rad{thetaMin / 1000.0}; //rad
     constexpr Int_t thetaMax{20};       //mrad
     constexpr Double_t thetaMax_rad{(thetaMax) / 1000.0}; //rad
-    constexpr Double_t dThetaStep{1.0}; //mrad
+    constexpr Double_t dThetaStep{0.5}; //mrad
     constexpr Int_t nThetaStep{Eric::returnNumberOfSteps(thetaMin, thetaMax, dThetaStep)};
 
 
-    
+    /*
     auto hSilicium = new TH2I("histogram Silicium", "XiB Silicium", nLengthStep, lengthMin_m, lengthMax_m, nThetaStep, thetaMin_rad, thetaMax_rad);
     auto hGermanium = new TH2I("histogram Germanium", "XiB Germanium", nLengthStep, lengthMin_m, lengthMax_m, nThetaStep, thetaMin_rad, thetaMax_rad);
     
@@ -56,7 +62,7 @@ void matrixMakerImproved(bool skipOnFail = true)
     hSilicium->SetFillColor(46);
     hGermanium->SetFillColor(46);
     TPaveLabel pl;
-    
+    */
     Double_t px, py, pz, E, l;
     t->SetBranchAddress("px", &px);
     t->SetBranchAddress("py", &py);
@@ -66,8 +72,19 @@ void matrixMakerImproved(bool skipOnFail = true)
 
     //line stores the amount of events we have
     Long64_t n = t->GetEntries();
+    
+    Short_t siliciumMatrix[nThetaStep][nLengthStep];
+    Short_t germaniumMatrix[nThetaStep][nLengthStep];
+    
+    for(Int_t iii{0}; iii < nThetaStep; ++iii)
+    {
+        for(Int_t jjj{0}; jjj < nLengthStep; ++jjj)
+        {
+            siliciumMatrix[iii][jjj] = 0;
+            germaniumMatrix[iii][jjj] = 0;
+        }    
+    }
 
-    //first loop goes over all the events
     for (Long64_t i = 0; i < n; ++i) 
     {
         if(!(i%(n/10))) std::cout << i / static_cast<Double_t>(n) << "\n";        
@@ -94,9 +111,9 @@ void matrixMakerImproved(bool skipOnFail = true)
 
                  
             
-            for(Int_t iii{0}; iii < nLengthStep; ++iii)
+            for(Int_t jjj{0}; jjj < nLengthStep; ++jjj)
             {
-                Double_t lengthCrystal{(lengthMin + iii * dLengthStep) / 100.0}; //cm to m
+                Double_t lengthCrystal{(lengthMin + jjj * dLengthStep) / 100.0}; //cm to m
                 Bool_t decayFail{!Eric::decayAfterCrystal(l, lengthCrystal)};
                 if (decayFail)
                 {                                      
@@ -105,9 +122,9 @@ void matrixMakerImproved(bool skipOnFail = true)
 
 
 
-                for(Int_t jjj{0}; jjj <= nThetaStep; ++jjj)
+                for(Int_t iii{0}; iii <= nThetaStep; ++iii)
                 {
-                    Double_t thetaCrystal{(thetaMin + jjj * dThetaStep) / 1000.0}; //mrad to rad
+                    Double_t thetaCrystal{(thetaMin + iii * dThetaStep) / 1000.0}; //mrad to rad
                     Double_t Rc{pv / (isSilicium ? Silicium::Uprime : Germanium::Uprime)};
                     Double_t R{(lengthCrystal / thetaCrystal) * 100.0}; // m to cm
                     Double_t RRatio{Rc / R};
@@ -131,17 +148,19 @@ void matrixMakerImproved(bool skipOnFail = true)
                     }
                     if (isSilicium)
                     {
-                        hSilicium->Fill(lengthCrystal, thetaCrystal);
+                        ++siliciumMatrix[iii][jjj];
                     }
                     else
                     {
-                        hGermanium->Fill(lengthCrystal, thetaCrystal);
+                        ++germaniumMatrix[iii][jjj];                      
                     }
                     //std::cout << lengthCrystal << " " << thetaCrystal << " " << gRandom->Uniform() << "\n";
                 }
             }
         }
     }
+    
+    /*
     auto c2h = new TCanvas("c2h", "Xib", 1200, 600);
     
     c2h->Divide(2,1);
@@ -150,10 +169,50 @@ void matrixMakerImproved(bool skipOnFail = true)
     c2h->cd(2);
     hGermanium->DrawClone();
     c2h->Update();
+    */
     /*
     outFile->WriteObject(hSilicium, hSilicium->GetName());
     outFile->WriteObject(hGermanium, hGermanium->GetName());
-    */ 
+    */
+    
+    //siliciumFile.close();
+    //siliciumFile.clear();
+    //germaniumFile.close();
+    //germaniumFile.clear();
+    std::ofstream outFile;
+    outFile.open("SiliciumXib.dat");
+    std::cout << "Silicium\n";
+    for(Int_t iii{0}; iii < nThetaStep; ++iii)
+    {
+        for(Int_t jjj{0}; jjj < nLengthStep; ++jjj)
+        {
+            std::cout << siliciumMatrix[iii][jjj] << "\t";
+            outFile << siliciumMatrix[iii][jjj] << "\t";
+        }
+        std::cout << "\n";
+        outFile << "\n";
+    }
+    outFile.close();
+    outFile.clear();
+    outFile.open("GermaniunXib.dat");
+    std::cout << "\nGermanium\n";
+    
+    for(Int_t iii{0}; iii < nThetaStep; ++iii)
+    {
+        for(Int_t jjj{0}; jjj < nLengthStep; ++jjj)
+        {
+            std::cout << germaniumMatrix[iii][jjj] << "\t";
+            outFile << germaniumMatrix[iii][jjj] << "\t";
+        }
+        std::cout << "\n";
+        outFile << "\n";
+    }
+
+    //std::cout << germaniumMatrix[0][1] << "\n";    
+    
+    outFile.close();
+    outFile.clear();
+    
 }
 
 namespace Eric
@@ -197,7 +256,7 @@ namespace Eric
     {
         Double_t ABent = Eric::getAStraight(thetaY, thetaLindhard, isSilicium) * (1.0 - RRatio);
         if(ABent < 0.0 || ABent > 1.0) return kFALSE;
-        return (gRandom->Uniform() <= ABent);
+        return (rnd.Uniform(0, 1) <= ABent);
     }
 
     Bool_t passesDechanneling(Double_t gamma, Double_t RRatio, Double_t thetaCrystal, Bool_t isSilicium) //condition 5
@@ -235,6 +294,6 @@ namespace Eric
         Double_t exponent{thetaCrystal / (thetaD * RRatio * std::pow(1.0 - RRatio, 2))};
         Double_t w{std::exp(-exponent)};
 
-        return (gRandom->Uniform() <= w);
+        return ( rnd.Uniform(0, 1) <= w);
     }
 }
