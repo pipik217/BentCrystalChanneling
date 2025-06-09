@@ -23,6 +23,7 @@ namespace Eric
     Bool_t passesTrappingProbability(Double_t thetaY, Double_t thetaLindhard, Double_t RRatio, Bool_t isSilicium); //condition 4
     Bool_t passesDechanneling(Double_t gamma, Double_t RRatio, Double_t thetaCrystal, Bool_t isSilicium); //condition 5
 }
+//Added Function
 void ChanneledParticlesFilterGermanium() {
     // Input file
     TFile f("eventsMultiplied.root", "READ");
@@ -43,7 +44,7 @@ void ChanneledParticlesFilterGermanium() {
     outTree.Branch("E", &channeled_E, "E/D");
 
     Long64_t n = t->GetEntries();
-
+//parameters used to get most output (Erics analysis)
     constexpr Int_t lengthCrystal_cm = 2;
     constexpr Double_t lengthCrystal_m = lengthCrystal_cm / 100.0;
     constexpr Int_t thetaCrystal_mrad = 5;
