@@ -1,15 +1,12 @@
 void side() {
 
-    // Create canvas and divide into 2 pads
+    // divide into 2 pads
     TCanvas *c1 = new TCanvas("c1", "Energy Distribution Comparison of Xi_{b} Particles", 1600,900);
     c1->SetTopMargin(0.05);
     c1->Divide(2,1);    
-    // Two plots side by side    c1->Divide(2,1);
 
-// Create top pad for the title
-  // ===============================
-    // === Plot 1: All Particles ====
-    // ===============================
+
+// graph for all Xib baryons
     TFile *file = TFile::Open("eventsMultiplied.root");
     if (!file || file->IsZombie()) {
         std::cerr << "Error: Cannot open eventsMultiplied.root!" << std::endl;
@@ -22,7 +19,7 @@ void side() {
         return;
     }
 
-    c1->cd(1);  // First pad
+    c1->cd(1); 
     gPad->SetGrid();
     gPad->SetLeftMargin(0.16);
     gPad->SetTopMargin(0.1);
@@ -31,7 +28,7 @@ void side() {
     hAll->SetYTitle("Relative Frequency");
 
     tree->Draw("E>>hAll");
-      // Normalize
+      // Normalized by dividing by total events same for channeled
     if (hAll->Integral() > 0)
         hAll->Scale(1.0 / hAll->Integral());
     hAll->SetMinimum(0);
@@ -39,14 +36,12 @@ void side() {
     hAll->SetLineColor(kBlue + 1);
     hAll->SetLineWidth(2);
     hAll->SetFillColor(kBlue - 10);
-    hAll->SetFillStyle(3004);  // Transparent fill
+    hAll->SetFillStyle(3004); 
     hAll->Draw("HIST");
-// Create right pad for Channeled particles
 
 
-    // ===============================
-    // === Plot 2: Channeled Particles ====
-    // ===============================
+// Second graph Channeled particles
+
     TFile *channeledFile = TFile::Open("channeled_particles_Germanium.root");
     if (!channeledFile || channeledFile->IsZombie()) {
         std::cerr << "Error: Cannot open channeled_particles.root!" << std::endl;
@@ -67,7 +62,6 @@ void side() {
     hChan->SetYTitle("Relative Frequency");
 
     channeledTree->Draw("E>>hChan");
-    // Normalize
     if (hChan->Integral() > 0)
         hChan->Scale(1.0 / hChan->Integral());
     hChan->SetMinimum(0);
@@ -77,25 +71,24 @@ void side() {
     hChan->SetFillColor(kRed - 10);
     hChan->SetFillStyle(3005);
     hChan->Draw("HIST");
-// Ensure both pads have been drawn first
+// debugging steps for no weird overlay
     c1->cd(1);
-    gPad->Update();  // Force update of pad 1
+    gPad->Update(); 
     c1->cd(2);
-    gPad->Update();  // Force update of pad 2
+    gPad->Update();  
     c1->cd();
-// Create a transparent pad just for the title
-    TPad *titlePad = new TPad("titlePad", "titlePad", 0, 0.93, 1, 1.0);  // top strip
-    titlePad->SetFillStyle(4000);  // Transparent
+// title
+    TPad *titlePad = new TPad("titlePad", "titlePad", 0, 0.93, 1, 1.0);  
+    titlePad->SetFillStyle(4000); 
     titlePad->SetFrameFillStyle(4000);
     titlePad->Draw();
     titlePad->cd();
     TLatex *title = new TLatex();
-    title->SetNDC();               // Use normalized device coordinates (0–1)
-    title->SetTextSize(0.8);      // Adjust the size (try 0.05–0.07)
-    title->SetTextAlign(22);       // Centered (horizontally and vertically)
+    title->SetNDC();              
+    title->SetTextSize(0.8);     
+    title->SetTextAlign(22);     
     title->DrawLatex(0.5, 0.5, "Energy Distribution Comparison of All vs. Channeled #Xi_{b} Baryons");
-   
-// Create a custom title
+
     // Save canvas as PNG
     c1->SaveAs("energy_distributions_side_by_side.png");
 
